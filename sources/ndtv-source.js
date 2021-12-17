@@ -1,10 +1,10 @@
 const { ndtvMapping } = require("../config/constants");
 const { default: axios } = require("axios");
-
+const ID = "ndtv";
 module.exports = {
-  id: "ndtv",
+  id: ID,
   mapping: ndtvMapping,
-  resolveFunction: (state = "") => {
+  resolveFunction: (state = "", date = new Date()) => {
     return new Promise(async function (resolve, reject) {
       try {
         const petrolResponse = await axios.get(
@@ -30,8 +30,7 @@ module.exports = {
           const tempNm = prevNm;
           prevNm = currentNm;
           return {
-            dieselPrice: currentNm,
-            dieselChange: tempNm ? tempNm - currentNm : 0,
+            diesel_price: currentNm,
           };
         });
         prevNm = 0;
@@ -51,8 +50,7 @@ module.exports = {
           const tempNm = prevNm;
           prevNm = currentNm;
           return {
-            petrolPrice: currentNm,
-            petrolChange: tempNm ? tempNm - currentNm : 0,
+            petrol_price: currentNm,
           };
         });
 
@@ -71,7 +69,8 @@ module.exports = {
           output.push({
             ...petrolOutPutArray[i],
             ...dieselOutPutArray[j],
-            date: new Date(new Date().getTime() - count * 24 * 60 * 60 * 1000),
+            source: ID,
+            date: new Date(date.getTime() - count * 24 * 60 * 60 * 1000),
           });
         }
         resolve(output);

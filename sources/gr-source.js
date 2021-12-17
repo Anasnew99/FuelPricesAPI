@@ -2,11 +2,11 @@ const cheerio = require("cheerio");
 const { default: axios } = require("axios");
 
 const { goodReturnsMapping } = require("../config/constants");
-
+const ID = "goodreturns";
 module.exports = {
-  id: "goodreturns",
+  id: ID,
   mapping: goodReturnsMapping,
-  resolveFunction: (state = "") => {
+  resolveFunction: (state = "", date = new Date()) => {
     return new Promise(async (resolve, rej) => {
       try {
         const dieselResponse = await axios.get(
@@ -15,74 +15,71 @@ module.exports = {
         const petrolResponse = await axios.get(
           `https://www.goodreturns.in/petrol-price-in-${state}.html`
         );
-        let max = 0;
+        let sum = 0;
+        let count = 0;
         let $ = cheerio.load(dieselResponse.data);
 
         $("#moneyweb-leftPanel > div.gold_silver_table tr>td:nth-child(2)")
           .contents()
           .each((e, el) => {
-            const diesel = parseFloat(el.data.replace("₹", "").trim());
-            if (diesel) {
-              // total++;
-              if (max < diesel) {
-                max = diesel;
-              }
+            const data = parseFloat(el.data.replace("₹", "").trim());
+            if (data) {
+              sum += parseFloat(el.data.replace("₹", "").trim());
+              count++;
             }
           });
-        const dieselAvg = max;
-        max = 0;
+        const dieselAvg = sum / count;
+        sum = 0;
+        count = 0;
         $("#moneyweb-leftPanel > div.gold_silver_table tr>td:nth-child(3)")
           .contents()
           .each((e, el) => {
-            const yestDiesel = parseFloat(el.data.replace("₹", "").trim());
-            if (yestDiesel) {
-              if (max < yestDiesel) {
-                max = yestDiesel;
-              }
+            const data = parseFloat(el.data.replace("₹", "").trim());
+            if (data) {
+              sum += parseFloat(el.data.replace("₹", "").trim());
+              count++;
             }
           });
 
-        const yestDiesel = max;
-        const dieselChange = max - dieselAvg;
-        max = 0;
+        const yestDiesel = sum / count;
+        sum = 0;
+        count = 0;
         $ = cheerio.load(petrolResponse.data);
         $("#moneyweb-leftPanel > div.gold_silver_table tr>td:nth-child(2)")
           .contents()
           .each((e, el) => {
-            const petrol = parseFloat(el.data.replace("₹", "").trim());
-            if (petrol) {
-              if (max < petrol) {
-                max = petrol;
-              }
+            const data = parseFloat(el.data.replace("₹", "").trim());
+            if (data) {
+              sum += parseFloat(el.data.replace("₹", "").trim());
+              count++;
             }
           });
-        const petrolAvg = max;
-        max = 0;
+        const petrolAvg = sum / count;
+        sum = 0;
+        count = 0;
         $("#moneyweb-leftPanel > div.gold_silver_table tr>td:nth-child(3)")
           .contents()
           .each((e, el) => {
-            const yestpetrol = parseFloat(el.data.replace("₹", "").trim());
-            if (yestpetrol) {
-              if (max < yestpetrol) max = yestpetrol;
+            const data = parseFloat(el.data.replace("₹", "").trim());
+            if (data) {
+              sum += parseFloat(el.data.replace("₹", "").trim());
+              count++;
             }
           });
 
-        const yestpetrol = max;
-        const petrolChange = max - petrolAvg;
+        const yestpetrol = sum / count;
         const outResult = [
           {
-            dieselPrice: dieselAvg,
-            dieselChange,
-            petrolPrice: petrolAvg,
-            petrolChange,
-            date: new Date(),
+            diesel_price: dieselAvg,
+            petrol_price: petrolAvg,
+            source: ID,
+            date: date,
           },
           {
-            dieselPrice: yestDiesel,
-            dieselChange: 0,
-            petrolPrice: yestpetrol,
-            petrolChange: 0,
-            date: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+            diesel_price: yestDiesel,
+            petrol_price: yestpetrol,
+            source: ID,
+            date: new Date(date.getTime() - 24 * 60 * 60 * 1000),
           },
         ];
         resolve(outResult);

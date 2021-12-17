@@ -1,23 +1,22 @@
 const { default: axios } = require("axios");
 const { etMapping } = require("../config/constants");
-
+const ID = "et";
 module.exports = {
-  id: "et",
+  id: ID,
   mapping: etMapping,
-  resolveFunction: (state = "") => {
+  resolveFunction: (state = "", date = new Date()) => {
     return new Promise((resolve, reject) => {
-      const limit = 100;
+      const limit = Number(process.env.ET_LIMIT) || 100;
       const latestDate = new Date();
       const processData = (DATA) => {
         const data = [];
         DATA.results.some((datum, index) => {
           if (index < limit) {
             data.push({
-              petrolPrice: parseFloat(datum.petrolPrice),
-              dieselPrice: parseFloat(datum.dieselPrice),
-              dieselChange: parseFloat(datum.dieselChange),
-              petrolChange: parseFloat(datum.petrolChange),
-              date: new Date(datum.priceDate),
+              petrol_price: parseFloat(datum.petrolPrice),
+              diesel_price: parseFloat(datum.dieselPrice),
+              source: ID,
+              date: new Date(date.getTime() - index * 24 * 60 * 60 * 1000),
             });
           } else {
             return true;
